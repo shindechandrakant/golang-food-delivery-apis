@@ -1,12 +1,16 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"food-ordering/config"
+	"food-ordering/internal/api/handlers"
+	"food-ordering/internal/api/routes"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/gofiber/fiber/v3"
 )
@@ -14,30 +18,37 @@ import (
 func main() {
 
 	config.LoadEnv()
-	_ = config.LoadMongoConnection()
+	mongoDbConnection := config.LoadMongoConnection()
 	_ = config.LoadRedisConnection()
 
-	SERVER_PORT := config.GetEnv("SERVER_PORT")
+	ServerPort := config.GetEnv("SERVER_PORT")
 	app := fiber.New()
 
+	ProductCollection := mongoDbConnection.Collection("product")
+	productHandler := handlers.InitProductModule(ProductCollection)
+	appRouter := app.Group("/api")
+	routes.ProductRoutes(appRouter, productHandler)
+
 	go func() {
-		if err := app.Listen(fmt.Sprintf(":%s", SERVER_PORT), fiber.ListenConfig{
-			EnablePrefork:     true,
-			EnablePrintRoutes: true,
-		}); err != nil {
-			log.Fatal()
+		quit := make(chan os.Signal, 1)
+		signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
+
+		<-quit
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		err := app.ShutdownWithContext(ctx)
+		if err != nil {
+			log.Println("unable to close the app", err)
 		}
+		config.CloseRedisConnection()
+		config.CloseMongoConnection()
+		log.Println("Server exited properly")
 	}()
 
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
-
-	<-quit
-	err := app.Shutdown()
-	if err != nil {
-		log.Println("unable to close the app", err)
+	if err := app.Listen(fmt.Sprintf(":%s", ServerPort), fiber.ListenConfig{
+		EnablePrefork:     false,
+		EnablePrintRoutes: true,
+	}); err != nil {
+		log.Fatalf("Server failed to start: %v", err)
 	}
-	config.CloseRedisConnection()
-	config.CloseMongoConnection()
-	log.Println("Server exited properly")
 }
