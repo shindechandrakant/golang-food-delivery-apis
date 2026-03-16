@@ -26,8 +26,11 @@ func main() {
 
 	ProductCollection := mongoDbConnection.Collection("product")
 	productHandler := handlers.InitProductModule(ProductCollection)
+	CartCollection := mongoDbConnection.Collection("cart")
+	cartHandler := handlers.InitCartModule(CartCollection)
 	appRouter := app.Group("/api")
 	routes.ProductRoutes(appRouter, productHandler)
+	routes.CartRoutes(appRouter, cartHandler)
 
 	go func() {
 		quit := make(chan os.Signal, 1)
