@@ -22,6 +22,11 @@ func main() {
 	mongoDbConnection := config.LoadMongoConnection()
 	_ = config.LoadRedisConnection()
 
+	jwtSecret := config.GetEnv("JWT_SECRET")
+	if jwtSecret == "" {
+		log.Fatal("JWT_SECRET env var is required")
+	}
+
 	// Load promo validator at startup. Sources can be overridden via env vars;
 	// defaults to downloading the three S3-hosted gz files.
 	promoSources := promoSourcesFromEnv()
@@ -34,18 +39,21 @@ func main() {
 	ServerPort := config.GetEnv("SERVER_PORT")
 	app := fiber.New()
 
+	UserCollection := mongoDbConnection.Collection("user")
 	ProductCollection := mongoDbConnection.Collection("product")
 	CartCollection := mongoDbConnection.Collection("cart")
 	OrderCollection := mongoDbConnection.Collection("order")
 
+	authHandler, authService := handlers.InitAuthModule(UserCollection, jwtSecret)
 	productHandler := handlers.InitProductModule(ProductCollection)
 	cartHandler := handlers.InitCartModule(CartCollection)
 	orderHandler := handlers.InitOrderModule(OrderCollection, ProductCollection, promoValidator)
 
 	appRouter := app.Group("/api")
+	routes.AuthRoutes(appRouter, authHandler)
 	routes.ProductRoutes(appRouter, productHandler)
-	routes.CartRoutes(appRouter, cartHandler)
-	routes.OrderRoutes(appRouter, orderHandler)
+	routes.CartRoutes(appRouter, cartHandler, authService)
+	routes.OrderRoutes(appRouter, orderHandler, authService)
 
 	go func() {
 		quit := make(chan os.Signal, 1)
@@ -71,8 +79,6 @@ func main() {
 	}
 }
 
-// promoSourcesFromEnv returns custom sources if set via environment variables,
-// otherwise returns nil (promo.Load will use its built-in defaults).
 func promoSourcesFromEnv() []string {
 	s1 := config.GetEnv("COUPON_FILE_1")
 	s2 := config.GetEnv("COUPON_FILE_2")

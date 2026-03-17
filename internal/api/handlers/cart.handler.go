@@ -29,7 +29,7 @@ func InitCartModule(collection *mongo.Collection) *CartHandler {
 
 func (h *CartHandler) AddItem(ctx fiber.Ctx) error {
 
-	userId := ctx.Get("x-user-id")
+	userId, _ := ctx.Locals("userId").(string)
 	var req dto.AddCartItemRequest
 
 	if err := ctx.Bind().Body(&req); err != nil {
@@ -45,7 +45,7 @@ func (h *CartHandler) AddItem(ctx fiber.Ctx) error {
 }
 
 func (h *CartHandler) GetCart(ctx fiber.Ctx) error {
-	userId := ctx.Get("x-user-id")
+	userId, _ := ctx.Locals("userId").(string)
 	cart, err := h.service.GetCart(ctx.Context(), userId)
 	if err != nil {
 		return utils.ErrorResponse(ctx, fiber.StatusNotFound, err.Error())
@@ -62,7 +62,7 @@ func (h *CartHandler) GetCart(ctx fiber.Ctx) error {
 }
 
 func (h *CartHandler) UpdateItem(ctx fiber.Ctx) error {
-	userId := ctx.Get("x-user-id")
+	userId, _ := ctx.Locals("userId").(string)
 	productId := ctx.Params("productId")
 
 	var req dto.UpdateCartItemRequest
@@ -79,7 +79,7 @@ func (h *CartHandler) UpdateItem(ctx fiber.Ctx) error {
 }
 
 func (h *CartHandler) RemoveItem(ctx fiber.Ctx) error {
-	userId := ctx.Get("x-user-id")
+	userId, _ := ctx.Locals("userId").(string)
 	productId := ctx.Params("productId")
 
 	err := h.service.RemoveItem(ctx.Context(), userId, productId)
@@ -91,7 +91,7 @@ func (h *CartHandler) RemoveItem(ctx fiber.Ctx) error {
 }
 
 func (h *CartHandler) ClearCart(ctx fiber.Ctx) error {
-	userId := ctx.Get("x-user-id")
+	userId, _ := ctx.Locals("userId").(string)
 
 	err := h.service.ClearCart(ctx, userId)
 	if err != nil {
