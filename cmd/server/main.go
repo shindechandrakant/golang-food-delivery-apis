@@ -56,7 +56,7 @@ func main() {
 	routes.AuthRoutes(appRouter, authHandler)
 	routes.ProductRoutes(appRouter, productHandler)
 	routes.CartRoutes(appRouter, cartHandler, authService)
-	routes.OrderRoutes(appRouter, orderHandler, authService)
+	routes.OrderRoutes(appRouter, orderHandler, authService, redisClient)
 
 	go func() {
 		quit := make(chan os.Signal, 1)
