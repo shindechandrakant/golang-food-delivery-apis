@@ -53,12 +53,41 @@ func (h *CartHandler) GetCart(ctx fiber.Ctx) error {
 
 	var totalCartValue float64 = 0
 	for _, item := range cart.Items {
-		totalCartValue += item.Price
+		totalCartValue += item.Price * float64(item.Quantity)
 	}
 	return utils.SuccessResponse(ctx, fiber.Map{
 		"cart":           cart,
 		"totalCartValue": totalCartValue,
 	})
+}
+
+func (h *CartHandler) UpdateItem(ctx fiber.Ctx) error {
+	userId := ctx.Get("x-user-id")
+	productId := ctx.Params("productId")
+
+	var req dto.UpdateCartItemRequest
+	if err := ctx.Bind().Body(&req); err != nil {
+		return utils.ErrorResponse(ctx, err.Error())
+	}
+
+	err := h.service.UpdateItem(ctx.Context(), userId, productId, req.Quantity)
+	if err != nil {
+		return utils.ErrorResponse(ctx, err.Error())
+	}
+
+	return utils.SuccessResponse(ctx, "Item updated")
+}
+
+func (h *CartHandler) RemoveItem(ctx fiber.Ctx) error {
+	userId := ctx.Get("x-user-id")
+	productId := ctx.Params("productId")
+
+	err := h.service.RemoveItem(ctx.Context(), userId, productId)
+	if err != nil {
+		return utils.ErrorResponse(ctx, err.Error())
+	}
+
+	return utils.SuccessResponse(ctx, "Item removed")
 }
 
 func (h *CartHandler) ClearCart(ctx fiber.Ctx) error {
