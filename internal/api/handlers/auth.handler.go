@@ -24,6 +24,16 @@ func InitAuthModule(userCollection *mongo.Collection, jwtSecret string) (*AuthHa
 	return NewAuthHandler(service), service
 }
 
+// Register godoc
+// @Summary     Register a new user
+// @Description Creates a new user account and returns a JWT token
+// @Tags        auth
+// @Accept      json
+// @Produce     json
+// @Param       request  body      dto.RegisterRequest       true  "Registration details"
+// @Success     201      {object}  dto.AuthSuccessResponse
+// @Failure     400      {object}  dto.ErrorResponse
+// @Router      /auth/register [post]
 func (h *AuthHandler) Register(ctx fiber.Ctx) error {
 	var req dto.RegisterRequest
 	if err := ctx.Bind().Body(&req); err != nil {
@@ -41,6 +51,17 @@ func (h *AuthHandler) Register(ctx fiber.Ctx) error {
 	})
 }
 
+// Login godoc
+// @Summary     Login
+// @Description Authenticates a user and returns a JWT token
+// @Tags        auth
+// @Accept      json
+// @Produce     json
+// @Param       request  body      dto.LoginRequest          true  "Login credentials"
+// @Success     200      {object}  dto.AuthSuccessResponse
+// @Failure     400      {object}  dto.ErrorResponse
+// @Failure     401      {object}  dto.ErrorResponse
+// @Router      /auth/login [post]
 func (h *AuthHandler) Login(ctx fiber.Ctx) error {
 	var req dto.LoginRequest
 	if err := ctx.Bind().Body(&req); err != nil {

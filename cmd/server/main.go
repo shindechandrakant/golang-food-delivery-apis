@@ -1,3 +1,16 @@
+// @title           Food Ordering API
+// @version         1.0
+// @description     REST API for food ordering with JWT authentication, cart management, and order placement.
+// @host            localhost:8000
+// @BasePath        /api
+// @schemes         http https
+
+// @securityDefinitions.apikey  BearerAuth
+// @in                          header
+// @name                        Authorization
+// @description                 Enter: Bearer <your-jwt-token>
+
+//go:generate swag init -g cmd/server/main.go -o docs --parseDependency --parseInternal
 package main
 
 import (
@@ -14,7 +27,10 @@ import (
 	"syscall"
 	"time"
 
+	_ "food-ordering/docs"
+
 	"github.com/gofiber/fiber/v3"
+	"github.com/gofiber/swagger"
 )
 
 func main() {
@@ -42,6 +58,9 @@ func main() {
 	ServerPort := config.GetEnv("SERVER_PORT")
 	app := fiber.New()
 
+	// Swagger UI — available at /swagger/index.html
+	app.Get("/swagger/*", swagger.HandlerDefault)
+
 	UserCollection := db.Collection("user")
 	ProductCollection := db.Collection("product")
 	CartCollection := db.Collection("cart")
@@ -49,8 +68,8 @@ func main() {
 
 	authHandler, authService := handlers.InitAuthModule(UserCollection, jwtSecret)
 	productHandler := handlers.InitProductModule(ProductCollection)
-	cartHandler := handlers.InitCartModule(CartCollection, redisClient) // write-through: Redis + MongoDB
-	orderHandler := handlers.InitOrderModule(OrderCollection, ProductCollection, promoValidator)
+	cartHandler := handlers.InitCartModule(CartCollection, redisClient)
+	orderHandler := handlers.InitOrderModule(OrderCollection, ProductCollection, promoValidator, redisClient)
 
 	appRouter := app.Group("/api")
 	routes.AuthRoutes(appRouter, authHandler)

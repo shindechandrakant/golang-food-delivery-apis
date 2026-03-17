@@ -1,0 +1,582 @@
+basePath: /api
+definitions:
+  food-ordering_internal_dto.AddCartItemRequest:
+    properties:
+      productId:
+        type: string
+      quantity:
+        minimum: 1
+        type: integer
+    required:
+    - productId
+    - quantity
+    type: object
+  food-ordering_internal_dto.AuthResponse:
+    properties:
+      token:
+        type: string
+      user:
+        $ref: '#/definitions/food-ordering_internal_dto.UserInfo'
+    type: object
+  food-ordering_internal_dto.AuthSuccessResponse:
+    properties:
+      data:
+        $ref: '#/definitions/food-ordering_internal_dto.AuthResponse'
+      success:
+        example: true
+        type: boolean
+    type: object
+  food-ordering_internal_dto.CartDetails:
+    properties:
+      cart:
+        $ref: '#/definitions/food-ordering_internal_dto.CartResponse'
+      totalCartValue:
+        example: 29.99
+        type: number
+    type: object
+  food-ordering_internal_dto.CartItemResponse:
+    properties:
+      price:
+        type: number
+      productID:
+        type: string
+      quantity:
+        type: integer
+    type: object
+  food-ordering_internal_dto.CartResponse:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/food-ordering_internal_dto.CartItemResponse'
+        type: array
+      userId:
+        type: string
+    type: object
+  food-ordering_internal_dto.CartSuccessResponse:
+    properties:
+      data:
+        $ref: '#/definitions/food-ordering_internal_dto.CartDetails'
+      success:
+        example: true
+        type: boolean
+    type: object
+  food-ordering_internal_dto.ErrorResponse:
+    properties:
+      error:
+        example: error message
+        type: string
+      success:
+        example: false
+        type: boolean
+    type: object
+  food-ordering_internal_dto.IdempotencyKeyResponse:
+    properties:
+      expiresIn:
+        example: 10 minutes
+        type: string
+      idempotencyKey:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      success:
+        example: true
+        type: boolean
+    type: object
+  food-ordering_internal_dto.Image:
+    properties:
+      desktop:
+        type: string
+      mobile:
+        type: string
+      tablet:
+        type: string
+      thumbnail:
+        type: string
+    type: object
+  food-ordering_internal_dto.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  food-ordering_internal_dto.MessageResponse:
+    properties:
+      data:
+        example: operation successful
+        type: string
+      success:
+        example: true
+        type: boolean
+    type: object
+  food-ordering_internal_dto.OrderItemRequest:
+    properties:
+      productId:
+        type: string
+      quantity:
+        minimum: 1
+        type: integer
+    required:
+    - productId
+    - quantity
+    type: object
+  food-ordering_internal_dto.OrderItemResponse:
+    properties:
+      productId:
+        type: string
+      quantity:
+        type: integer
+    type: object
+  food-ordering_internal_dto.OrderResponse:
+    properties:
+      id:
+        type: string
+      items:
+        items:
+          $ref: '#/definitions/food-ordering_internal_dto.OrderItemResponse'
+        type: array
+      products:
+        items:
+          $ref: '#/definitions/food-ordering_internal_dto.ProductResponse'
+        type: array
+    type: object
+  food-ordering_internal_dto.OrderSuccessResponse:
+    properties:
+      data:
+        $ref: '#/definitions/food-ordering_internal_dto.OrderResponse'
+      success:
+        example: true
+        type: boolean
+    type: object
+  food-ordering_internal_dto.PlaceOrderRequest:
+    properties:
+      couponCode:
+        type: string
+      items:
+        items:
+          $ref: '#/definitions/food-ordering_internal_dto.OrderItemRequest'
+        minItems: 1
+        type: array
+    required:
+    - items
+    type: object
+  food-ordering_internal_dto.ProductListResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/food-ordering_internal_dto.ProductResponse'
+        type: array
+      success:
+        example: true
+        type: boolean
+    type: object
+  food-ordering_internal_dto.ProductResponse:
+    properties:
+      category:
+        type: string
+      cuisines:
+        items:
+          type: string
+        type: array
+      description:
+        type: string
+      id:
+        type: string
+      image:
+        items:
+          $ref: '#/definitions/food-ordering_internal_dto.Image'
+        type: array
+      name:
+        type: string
+      price:
+        type: number
+      rating:
+        type: number
+    type: object
+  food-ordering_internal_dto.ProductSuccessResponse:
+    properties:
+      data:
+        $ref: '#/definitions/food-ordering_internal_dto.ProductResponse'
+      success:
+        example: true
+        type: boolean
+    type: object
+  food-ordering_internal_dto.RegisterRequest:
+    properties:
+      email:
+        type: string
+      name:
+        type: string
+      password:
+        minLength: 6
+        type: string
+    required:
+    - email
+    - name
+    - password
+    type: object
+  food-ordering_internal_dto.UpdateCartItemRequest:
+    properties:
+      quantity:
+        minimum: 1
+        type: integer
+    required:
+    - quantity
+    type: object
+  food-ordering_internal_dto.UserInfo:
+    properties:
+      email:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      role:
+        type: string
+    type: object
+host: localhost:8000
+info:
+  contact: {}
+  description: REST API for food ordering with JWT authentication, cart management,
+    and order placement.
+  title: Food Ordering API
+  version: "1.0"
+paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticates a user and returns a JWT token
+      parameters:
+      - description: Login credentials
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/food-ordering_internal_dto.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/food-ordering_internal_dto.AuthSuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/food-ordering_internal_dto.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/food-ordering_internal_dto.ErrorResponse'
+      summary: Login
+      tags:
+      - auth
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new user account and returns a JWT token
+      parameters:
+      - description: Registration details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/food-ordering_internal_dto.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/food-ordering_internal_dto.AuthSuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/food-ordering_internal_dto.ErrorResponse'
+      summary: Register a new user
+      tags:
+      - auth
+  /cart:
+    delete:
+      description: Removes all items from the authenticated user's cart
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/food-ordering_internal_dto.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/food-ordering_internal_dto.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/food-ordering_internal_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Clear cart
+      tags:
+      - cart
+    get:
+      description: Returns the authenticated user's cart with total value
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/food-ordering_internal_dto.CartSuccessResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/food-ordering_internal_dto.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/food-ordering_internal_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get cart
+      tags:
+      - cart
+  /cart/items:
+    post:
+      consumes:
+      - application/json
+      description: Adds a product to the authenticated user's cart. If the product
+        is already in the cart, its quantity is incremented.
+      parameters:
+      - description: Product to add
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/food-ordering_internal_dto.AddCartItemRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/food-ordering_internal_dto.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/food-ordering_internal_dto.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/food-ordering_internal_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Add item to cart
+      tags:
+      - cart
+  /cart/items/{productId}:
+    delete:
+      description: Removes a specific product from the cart
+      parameters:
+      - description: Product ObjectID
+        in: path
+        name: productId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/food-ordering_internal_dto.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/food-ordering_internal_dto.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/food-ordering_internal_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Remove item from cart
+      tags:
+      - cart
+    put:
+      consumes:
+      - application/json
+      description: Updates the quantity of a specific product in the cart
+      parameters:
+      - description: Product ObjectID
+        in: path
+        name: productId
+        required: true
+        type: string
+      - description: New quantity
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/food-ordering_internal_dto.UpdateCartItemRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/food-ordering_internal_dto.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/food-ordering_internal_dto.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/food-ordering_internal_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update cart item quantity
+      tags:
+      - cart
+  /order:
+    post:
+      consumes:
+      - application/json
+      description: Places a new order for the authenticated user. Requires a server-issued
+        idempotency key obtained from GET /order/idempotency-key. Sending the same
+        key twice replays the original response without creating a duplicate order.
+      parameters:
+      - description: Server-issued idempotency key (from GET /order/idempotency-key)
+        in: header
+        name: Idempotency-Key
+        required: true
+        type: string
+      - description: Order details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/food-ordering_internal_dto.PlaceOrderRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          headers:
+            Idempotency-Key:
+              description: Echoed key
+              type: string
+            X-Idempotent-Replayed:
+              description: true if this is a replayed response
+              type: string
+          schema:
+            $ref: '#/definitions/food-ordering_internal_dto.OrderSuccessResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/food-ordering_internal_dto.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/food-ordering_internal_dto.ErrorResponse'
+        "409":
+          description: Key already in use by a concurrent request
+          schema:
+            $ref: '#/definitions/food-ordering_internal_dto.ErrorResponse'
+        "422":
+          description: Invalid/expired key or order validation error
+          schema:
+            $ref: '#/definitions/food-ordering_internal_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Place an order
+      tags:
+      - order
+  /order/idempotency-key:
+    get:
+      description: Generates a server-issued idempotency key scoped to the authenticated
+        user. The key must be sent as the Idempotency-Key header when placing an order.
+        Keys expire after 10 minutes if unused.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          headers:
+            Idempotency-Key:
+              description: The generated key
+              type: string
+          schema:
+            $ref: '#/definitions/food-ordering_internal_dto.IdempotencyKeyResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/food-ordering_internal_dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/food-ordering_internal_dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get an idempotency key
+      tags:
+      - order
+  /product:
+    get:
+      description: Returns all products available for ordering
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/food-ordering_internal_dto.ProductListResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/food-ordering_internal_dto.ErrorResponse'
+      summary: List all products
+      tags:
+      - product
+  /product/{id}:
+    get:
+      description: Returns a single product by its MongoDB ObjectID
+      parameters:
+      - description: Product ObjectID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/food-ordering_internal_dto.ProductSuccessResponse'
+        "400":
+          description: Invalid ID
+          schema:
+            $ref: '#/definitions/food-ordering_internal_dto.ErrorResponse'
+        "404":
+          description: Product not found
+          schema:
+            $ref: '#/definitions/food-ordering_internal_dto.ErrorResponse'
+      summary: Get product by ID
+      tags:
+      - product
+schemes:
+- http
+- https
+securityDefinitions:
+  BearerAuth:
+    description: 'Enter: Bearer <your-jwt-token>'
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

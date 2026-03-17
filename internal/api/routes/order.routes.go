@@ -14,10 +14,6 @@ func OrderRoutes(app fiber.Router, h *handlers.OrderHandler, authService *servic
 	idempotency := middleware.Idempotency(redisClient)
 
 	order := app.Group("/order", jwtAuth)
-
-	// Step 1: client requests a server-issued idempotency key.
-	order.Get("/idempotency-key", middleware.IdempotencyKey(redisClient))
-
-	// Step 2: client places the order using that key.
+	order.Get("/idempotency-key", h.GetIdempotencyKey)
 	order.Post("/", idempotency, h.PlaceOrder)
 }
