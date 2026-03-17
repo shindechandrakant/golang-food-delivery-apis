@@ -6,44 +6,33 @@ import (
 	"food-ordering/internal/dto"
 	"food-ordering/internal/models"
 	"food-ordering/internal/repository"
-
-	"go.mongodb.org/mongo-driver/v2/bson"
 )
 
 type CartService struct {
-	repo *repository.CartRepository
+	repo repository.CartRepository
 }
 
-func NewCartService(cartRepository *repository.CartRepository) *CartService {
-	return &CartService{repo: cartRepository}
+func NewCartService(repo repository.CartRepository) *CartService {
+	return &CartService{repo: repo}
 }
 
 func (s *CartService) AddItem(ctx context.Context, userId string, req dto.AddCartItemRequest) error {
-
-	productId, _ := bson.ObjectIDFromHex(req.ProductId)
-
-	cart, _ := s.repo.FindByUser(ctx, userId)
-	if cart == nil {
-		cart = &models.Cart{
-			UserId: userId,
-		}
+	cart, err := s.repo.FindByUser(ctx, userId)
+	if err != nil {
+		return err
 	}
-	found := false
 
 	for i, item := range cart.Items {
-		if item.ProductId == productId {
+		if item.ProductId == req.ProductId {
 			cart.Items[i].Quantity += req.Quantity
-			found = true
-			break
+			return s.repo.Save(ctx, cart)
 		}
 	}
 
-	if !found {
-		cart.Items = append(cart.Items, models.CartItem{
-			ProductId: productId,
-			Quantity:  req.Quantity,
-		})
-	}
+	cart.Items = append(cart.Items, models.CartItem{
+		ProductId: req.ProductId,
+		Quantity:  req.Quantity,
+	})
 
 	return s.repo.Save(ctx, cart)
 }
@@ -53,38 +42,22 @@ func (s *CartService) GetCart(ctx context.Context, userId string) (*models.Cart,
 }
 
 func (s *CartService) UpdateItem(ctx context.Context, userId string, productId string, quantity int) error {
-	objId, err := bson.ObjectIDFromHex(productId)
-	if err != nil {
-		return err
-	}
-
 	cart, err := s.repo.FindByUser(ctx, userId)
 	if err != nil {
 		return err
 	}
 
-	found := false
 	for i, item := range cart.Items {
-		if item.ProductId == objId {
+		if item.ProductId == productId {
 			cart.Items[i].Quantity = quantity
-			found = true
-			break
+			return s.repo.Save(ctx, cart)
 		}
 	}
 
-	if !found {
-		return fmt.Errorf("item not found in cart")
-	}
-
-	return s.repo.Save(ctx, cart)
+	return fmt.Errorf("item not found in cart")
 }
 
 func (s *CartService) RemoveItem(ctx context.Context, userId string, productId string) error {
-	objId, err := bson.ObjectIDFromHex(productId)
-	if err != nil {
-		return err
-	}
-
 	cart, err := s.repo.FindByUser(ctx, userId)
 	if err != nil {
 		return err
@@ -92,7 +65,7 @@ func (s *CartService) RemoveItem(ctx context.Context, userId string, productId s
 
 	filtered := cart.Items[:0]
 	for _, item := range cart.Items {
-		if item.ProductId != objId {
+		if item.ProductId != productId {
 			filtered = append(filtered, item)
 		}
 	}

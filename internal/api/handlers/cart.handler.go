@@ -7,6 +7,7 @@ import (
 	"food-ordering/internal/utils"
 
 	"github.com/gofiber/fiber/v3"
+	"github.com/redis/go-redis/v9"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
@@ -15,16 +16,15 @@ type CartHandler struct {
 }
 
 func NewCartHandler(service *services.CartService) *CartHandler {
-	return &CartHandler{
-		service: service,
-	}
+	return &CartHandler{service: service}
 }
 
-func InitCartModule(collection *mongo.Collection) *CartHandler {
-	repo := repository.NewCartRepository(collection)
+func InitCartModule(collection *mongo.Collection, redisClient *redis.Client) *CartHandler {
+	mongoRepo := repository.NewMongoCartRepository(collection)
+	redisRepo := repository.NewRedisCartRepository(redisClient)
+	repo := repository.NewWriteThroughCartRepository(mongoRepo, redisRepo)
 	service := services.NewCartService(repo)
-	handler := NewCartHandler(service)
-	return handler
+	return NewCartHandler(service)
 }
 
 func (h *CartHandler) AddItem(ctx fiber.Ctx) error {

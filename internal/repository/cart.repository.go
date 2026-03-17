@@ -9,17 +9,23 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 )
 
-type CartRepository struct {
+// CartRepository is the persistence contract for the cart.
+type CartRepository interface {
+	FindByUser(ctx context.Context, userId string) (*models.Cart, error)
+	Save(ctx context.Context, cart *models.Cart) error
+	Clear(ctx context.Context, userId string) error
+}
+
+// MongoCartRepository is a MongoDB-backed CartRepository (kept as fallback).
+type MongoCartRepository struct {
 	Collection *mongo.Collection
 }
 
-func NewCartRepository(collection *mongo.Collection) *CartRepository {
-	return &CartRepository{
-		Collection: collection,
-	}
+func NewMongoCartRepository(collection *mongo.Collection) *MongoCartRepository {
+	return &MongoCartRepository{Collection: collection}
 }
 
-func (c *CartRepository) FindByUser(ctx context.Context, userId string) (*models.Cart, error) {
+func (c *MongoCartRepository) FindByUser(ctx context.Context, userId string) (*models.Cart, error) {
 	var cart models.Cart
 	err := c.Collection.FindOne(ctx, bson.M{"userId": userId}).Decode(&cart)
 	if err != nil {
@@ -28,18 +34,16 @@ func (c *CartRepository) FindByUser(ctx context.Context, userId string) (*models
 	return &cart, nil
 }
 
-func (c *CartRepository) Save(ctx context.Context, cart *models.Cart) error {
-
+func (c *MongoCartRepository) Save(ctx context.Context, cart *models.Cart) error {
 	opts := options.UpdateOne().SetUpsert(true)
 	_, err := c.Collection.UpdateOne(ctx,
 		bson.M{"userId": cart.UserId},
 		bson.M{"$set": cart},
 		opts)
-
 	return err
 }
 
-func (c *CartRepository) Clear(ctx context.Context, userId string) error {
+func (c *MongoCartRepository) Clear(ctx context.Context, userId string) error {
 	_, err := c.Collection.DeleteOne(ctx, bson.M{"userId": userId})
 	return err
 }
