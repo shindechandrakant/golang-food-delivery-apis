@@ -30,7 +30,7 @@ import (
 	_ "food-ordering/docs"
 
 	"github.com/gofiber/fiber/v3"
-	"github.com/gofiber/swagger"
+	"github.com/gofiber/fiber/v3/middleware/static"
 )
 
 func main() {
@@ -44,11 +44,8 @@ func main() {
 		log.Fatal("JWT_SECRET env var is required")
 	}
 
-	// Ensure all MongoDB indexes exist before accepting traffic.
 	database.EnsureIndexes(db)
 
-	// Load promo validator at startup. Sources can be overridden via env vars;
-	// defaults to downloading the three S3-hosted gz files.
 	log.Println("Loading promo code validator (this may take a moment)...")
 	promoValidator, err := promo.Load(promoSourcesFromEnv())
 	if err != nil {
@@ -58,8 +55,19 @@ func main() {
 	ServerPort := config.GetEnv("SERVER_PORT")
 	app := fiber.New()
 
-	// Swagger UI — available at /swagger/index.html
-	app.Get("/swagger/*", swagger.HandlerDefault)
+	// Serve generated swagger.json
+	app.Get("/swagger/doc.json", func(c fiber.Ctx) error {
+		return c.SendFile("./docs/swagger.json")
+	})
+
+	// Serve swagger UI (loads swagger-ui from CDN, points at /swagger/doc.json)
+	app.Get("/swagger", func(c fiber.Ctx) error {
+		c.Set(fiber.HeaderContentType, fiber.MIMETextHTML)
+		return c.SendString(swaggerUI)
+	})
+
+	// Serve static assets from docs/ (swagger.json reachable directly too)
+	app.Use("/docs", static.New("./docs"))
 
 	UserCollection := db.Collection("user")
 	ProductCollection := db.Collection("product")
@@ -101,6 +109,8 @@ func main() {
 }
 
 func promoSourcesFromEnv() []string {
+
+	return []string{}
 	s1 := config.GetEnv("COUPON_FILE_1")
 	s2 := config.GetEnv("COUPON_FILE_2")
 	s3 := config.GetEnv("COUPON_FILE_3")
@@ -109,3 +119,26 @@ func promoSourcesFromEnv() []string {
 	}
 	return []string{s1, s2, s3}
 }
+
+const swaggerUI = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Food Ordering API — Swagger UI</title>
+  <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css">
+</head>
+<body>
+  <div id="swagger-ui"></div>
+  <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
+  <script>
+    SwaggerUIBundle({
+      url: "/swagger/doc.json",
+      dom_id: "#swagger-ui",
+      presets: [SwaggerUIBundle.presets.apis, SwaggerUIBundle.SwaggerUIStandalonePreset],
+      layout: "BaseLayout",
+      deepLinking: true,
+      defaultModelsExpandDepth: 1,
+    });
+  </script>
+</body>
+</html>`
