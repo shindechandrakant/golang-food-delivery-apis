@@ -25,18 +25,29 @@ func InitProductModule(collection *mongo.Collection) *ProductHandler {
 }
 
 // GetProducts godoc
-// @Summary     List all products
-// @Description Returns all products available for ordering
+// @Summary     List products
+// @Description Returns products with optional filtering by name, category, price range, and sorting.
 // @Tags        product
 // @Produce     json
+// @Param       name       query     string   false  "Partial name search (case-insensitive)"
+// @Param       category   query     string   false  "Filter by exact category"
+// @Param       minPrice   query     number   false  "Minimum price (inclusive)"
+// @Param       maxPrice   query     number   false  "Maximum price (inclusive)"
+// @Param       sortBy     query     string   false  "Sort field: name | price | rating"    Enums(name, price, rating)
+// @Param       sortOrder  query     string   false  "Sort direction: asc | desc"           Enums(asc, desc)
 // @Success     200  {object}  dto.ProductListResponse
+// @Failure     400  {object}  dto.ErrorResponse
 // @Failure     500  {object}  dto.ErrorResponse
 // @Router      /product [get]
 func (h *ProductHandler) GetProducts(ctx fiber.Ctx) error {
+	var filter dto.ProductFilter
+	if err := ctx.Bind().Query(&filter); err != nil {
+		return utils.ErrorResponse(ctx, fiber.StatusBadRequest, err.Error())
+	}
+
 	var products []dto.ProductResponse
 	var err error
-
-	products, err = h.service.GetProducts(ctx.Context())
+	products, err = h.service.GetProducts(ctx.Context(), filter)
 	if err != nil {
 		return utils.ErrorResponse(ctx, fiber.StatusInternalServerError, err.Error())
 	}
@@ -58,7 +69,6 @@ func (h *ProductHandler) GetProduct(ctx fiber.Ctx) error {
 
 	var product *dto.ProductResponse
 	var err error
-
 	product, err = h.service.GetProduct(ctx.Context(), id)
 	if err != nil {
 		return utils.ErrorResponse(ctx, fiber.StatusNotFound, err.Error())

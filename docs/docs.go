@@ -451,19 +451,72 @@ const docTemplate = `{
         },
         "/product": {
             "get": {
-                "description": "Returns all products available for ordering",
+                "description": "Returns products with optional filtering by name, category, price range, and sorting.",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "product"
                 ],
-                "summary": "List all products",
+                "summary": "List products",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Partial name search (case-insensitive)",
+                        "name": "name",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by exact category",
+                        "name": "category",
+                        "in": "query"
+                    },
+                    {
+                        "type": "number",
+                        "description": "Minimum price (inclusive)",
+                        "name": "minPrice",
+                        "in": "query"
+                    },
+                    {
+                        "type": "number",
+                        "description": "Maximum price (inclusive)",
+                        "name": "maxPrice",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "name",
+                            "price",
+                            "rating"
+                        ],
+                        "type": "string",
+                        "description": "Sort field: name | price | rating",
+                        "name": "sortBy",
+                        "in": "query"
+                    },
+                    {
+                        "enum": [
+                            "asc",
+                            "desc"
+                        ],
+                        "type": "string",
+                        "description": "Sort direction: asc | desc",
+                        "name": "sortOrder",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/food-ordering_internal_dto.ProductListResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/food-ordering_internal_dto.ErrorResponse"
                         }
                     },
                     "500": {

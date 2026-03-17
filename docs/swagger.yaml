@@ -528,7 +528,40 @@ paths:
       - order
   /product:
     get:
-      description: Returns all products available for ordering
+      description: Returns products with optional filtering by name, category, price
+        range, and sorting.
+      parameters:
+      - description: Partial name search (case-insensitive)
+        in: query
+        name: name
+        type: string
+      - description: Filter by exact category
+        in: query
+        name: category
+        type: string
+      - description: Minimum price (inclusive)
+        in: query
+        name: minPrice
+        type: number
+      - description: Maximum price (inclusive)
+        in: query
+        name: maxPrice
+        type: number
+      - description: 'Sort field: name | price | rating'
+        enum:
+        - name
+        - price
+        - rating
+        in: query
+        name: sortBy
+        type: string
+      - description: 'Sort direction: asc | desc'
+        enum:
+        - asc
+        - desc
+        in: query
+        name: sortOrder
+        type: string
       produces:
       - application/json
       responses:
@@ -536,11 +569,15 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/food-ordering_internal_dto.ProductListResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/food-ordering_internal_dto.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
             $ref: '#/definitions/food-ordering_internal_dto.ErrorResponse'
-      summary: List all products
+      summary: List products
       tags:
       - product
   /product/{id}:

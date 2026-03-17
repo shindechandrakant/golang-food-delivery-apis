@@ -1,5 +1,14 @@
 package dto
 
+type ProductFilter struct {
+	Name      string  `query:"name"`      // partial, case-insensitive
+	Category  string  `query:"category"`  // exact match
+	MinPrice  float64 `query:"minPrice"`  // inclusive lower bound (0 = no limit)
+	MaxPrice  float64 `query:"maxPrice"`  // inclusive upper bound (0 = no limit)
+	SortBy    string  `query:"sortBy"`    // "name" | "price" | "rating"  (default: "name")
+	SortOrder string  `query:"sortOrder"` // "asc" | "desc"               (default: "asc")
+}
+
 type Image struct {
 	Thumbnail string `json:"thumbnail"`
 	Mobile    string `json:"mobile"`
