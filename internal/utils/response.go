@@ -9,8 +9,8 @@ func SuccessResponse(ctx fiber.Ctx, data interface{}) error {
 	})
 }
 
-func ErrorResponse(ctx fiber.Ctx, message string) error {
-	return ctx.Status(400).JSON(fiber.Map{
+func ErrorResponse(ctx fiber.Ctx, status int, message string) error {
+	return ctx.Status(status).JSON(fiber.Map{
 		"success": false,
 		"error":   message,
 	})

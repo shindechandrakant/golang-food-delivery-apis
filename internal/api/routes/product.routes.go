@@ -7,7 +7,7 @@ import (
 )
 
 func ProductRoutes(app fiber.Router, handler *handlers.ProductHandler) {
-	product := app.Group("/products")
+	product := app.Group("/product")
 
 	product.Get("/", handler.GetProducts)
 	product.Get("/:id", handler.GetProduct)

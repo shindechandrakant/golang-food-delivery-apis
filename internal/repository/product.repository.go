@@ -40,3 +40,17 @@ func (r *ProductRepository) FindById(ctx context.Context, id bson.ObjectID) (*mo
 	}
 	return &product, nil
 }
+
+func (r *ProductRepository) FindByIds(ctx context.Context, ids []bson.ObjectID) ([]models.Product, error) {
+
+	cursor, err := r.Collection.Find(ctx, bson.M{"_id": bson.M{"$in": ids}})
+	if err != nil {
+		return nil, err
+	}
+
+	var products []models.Product
+	if err = cursor.All(ctx, &products); err != nil {
+		return nil, err
+	}
+	return products, nil
+}
